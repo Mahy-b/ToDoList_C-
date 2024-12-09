@@ -1,0 +1,114 @@
+﻿@page "/todos/edit"
+@using Microsoft.EntityFrameworkCore
+@using TodoList2
+@inject IDbContextFactory<TodoList2.Data.TodoList2Context> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Todo</h2>
+<hr />
+@if (Todo is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Todo" OnValidSubmit="UpdateTodo" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Todo.Id" value="@Todo.Id" />
+                <div class="mb-3">
+                    <label for="context" class="form-label">Context:</label>
+                    <InputText id="context" @bind-Value="Todo.Context" class="form-control" />
+                    <ValidationMessage For="() => Todo.Context" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="isdone" class="form-label">IsDone:</label>
+                    <InputCheckbox id="isdone" @bind-Value="Todo.IsDone" class="form-check-input" />
+                    <ValidationMessage For="() => Todo.IsDone" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="timenedded" class="form-label">TimeNedded:</label>
+                    <InputText id="timenedded" @bind-Value="Todo.TimeNedded" class="form-control" />
+                    <ValidationMessage For="() => Todo.TimeNedded" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="priority" class="form-label">Priority:</label>
+                    <InputNumber id="priority" @bind-Value="Todo.Priority" class="form-control" />
+                    <ValidationMessage For="() => Todo.Priority" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="urgent" class="form-label">Urgent:</label>
+                    <InputNumber id="urgent" @bind-Value="Todo.Urgent" class="form-control" />
+                    <ValidationMessage For="() => Todo.Urgent" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="regularity" class="form-label">Regularity:</label>
+                    <InputText id="regularity" @bind-Value="Todo.Regularity" class="form-control" />
+                    <ValidationMessage For="() => Todo.Regularity" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/todos">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Todo? Todo { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Todo ??= await context.Todo.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Todo is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateTodo()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Todo!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!TodoExists(Todo!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/todos");
+    }
+
+    private bool TodoExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Todo.Any(e => e.Id == id);
+    }
+}

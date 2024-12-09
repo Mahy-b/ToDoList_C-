@@ -1,0 +1,75 @@
+﻿@page "/todos/delete"
+@using Microsoft.EntityFrameworkCore
+@using TodoList2
+@inject IDbContextFactory<TodoList2.Data.TodoList2Context> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<p>Are you sure you want to delete this?</p>
+<div>
+    <h2>Todo</h2>
+    <hr />
+    @if (todo is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Context</dt>
+            <dd class="col-sm-10">@todo.Context</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">IsDone</dt>
+            <dd class="col-sm-10">@todo.IsDone</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">TimeNedded</dt>
+            <dd class="col-sm-10">@todo.TimeNedded</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Priority</dt>
+            <dd class="col-sm-10">@todo.Priority</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Urgent</dt>
+            <dd class="col-sm-10">@todo.Urgent</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Regularity</dt>
+            <dd class="col-sm-10">@todo.Regularity</dd>
+        </dl>
+        <EditForm method="post" Model="todo" OnValidSubmit="DeleteTodo" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(todo is null)">Delete</button> |
+            <a href="/todos">Back to List</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private Todo? todo;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        todo = await context.Todo.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (todo is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteTodo()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Todo.Remove(todo!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/todos");
+    }
+}

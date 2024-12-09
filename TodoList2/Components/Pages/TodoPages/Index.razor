@@ -1,0 +1,160 @@
+﻿@page "/todos"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using TodoList2
+@using TodoList2.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<TodoList2.Data.TodoList2Context> DbFactory
+@rendermode InteractiveServer
+
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="todos/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Todo" Pagination="state">
+     <PropertyColumn Property="Todo => Todo.Context" Sortable="true">
+        <ColumnOptions>
+            <div>
+                <input type="search" @bind="contextFilter" @bind:event="oninput" autofocus/>
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
+    <PropertyColumn Property="todo => todo.IsDone" />
+    <PropertyColumn Property="todo => todo.TimeNedded" Sortable="true"/>
+    <PropertyColumn Property="todo => todo.Priority" Sortable="true"/>
+    <PropertyColumn Property="todo => todo.Urgent" Sortable="true" />
+    <PropertyColumn Property="todo => todo.Regularity" />
+
+    <TemplateColumn Context="todo">
+        <a href="@($"todos/edit?id={todo.Id}")">Edit</a> |
+
+        <a href="@($"todos/delete?id={todo.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+
+<Paginator State="state"></Paginator>
+
+@code {
+    private TodoList2Context context = default!;
+    string contextFilter = "";
+
+    IQueryable<Todo> FilteredMovies => contextt.Todo.Where(m => m.Context.Contains(contextFilter));
+
+    PaginationState state = new PaginationState { ItemsPerPage = 4 };
+    private TodoList2Context contextt = default!;
+
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}
+
+
+
+@*<PageTitle>TODO LIST</PageTitle>
+
+
+<h1>TODO LIST</h1>
+
+<h3>Todos (@todos.Count(t => !t.IsDone))</h3>
+
+<p>
+    <a href="todos/create">Create New</a>
+</p>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                {<input type="search" @bind-Value="todos." @bind:event="oninput" autofocus /> } 
+            </th>
+            <th>
+                Done
+            </th>
+            <th>
+                Priority
+            </th>
+            <th>
+                Urgent
+            </th>
+            <th>
+                Regularity
+            </th>
+            <th>
+                Time(min)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in todos)
+        {
+            <tr>
+                <td>
+                    @item.Context
+                </td>
+                <td>
+                    <input type="checkbox" name="name" value="@item.IsDone" />
+                </td>
+                <td>
+                    @item.Priority
+                </td>
+                <td>
+                    @item.Urgent
+                </td>
+                <td>
+                    @item.Regularity
+                </td>
+                <td>
+                    @item.TimeNedded
+                </td>
+                <td>
+                    <a href="@($"todos/edit?id={item.Id}")">Edit</a> |
+                    <a href="@($"todos/delete?id={item.Id}")">Delete</a>
+                </td>
+            </tr>
+        }
+    
+    </tbody>
+</table>
+
+
+
+
+@code {
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Todo? Todoo { get; set; }
+    private TodoList2Context context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Todoo ??= await context.Todo.FirstOrDefaultAsync(m => m.Id == Id);
+        todos = await context.Todo.ToListAsync();
+    }
+
+    private List<Todo> todos = new List<Todo>();
+
+
+}
+*@

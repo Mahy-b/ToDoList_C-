@@ -1,0 +1,64 @@
+﻿@page "/todos/create"
+@using Microsoft.EntityFrameworkCore
+@using TodoList2
+@inject IDbContextFactory<TodoList2.Data.TodoList2Context> DbFactory
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>New Task</PageTitle>
+
+<h1>Create A New Task</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Todo" OnValidSubmit="AddTodo" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="context" class="form-label">Context:</label> 
+                <InputText id="context" @bind-Value="Todo.Context" class="form-control" /> 
+                <ValidationMessage For="() => Todo.Context" class="text-danger" /> 
+            </div>             
+            <div class="mb-3">
+                <label for="timenedded" class="form-label">TimeNedded(Min):</label> 
+                <InputText id="timenedded" @bind-Value="Todo.TimeNedded" class="form-control" />
+                <ValidationMessage For="() => Todo.TimeNedded" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="priority" class="form-label">Priority(1 for super Importent to 5 do it if you have time):</label>
+                <InputNumber id="priority" @bind-Value="Todo.Priority" class="form-control" min="1" max="5" step="1" />
+                <ValidationMessage For="() => Todo.Priority" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="urgent" class="form-label">Urgent(1 for super urgent to 5 you can do it anytime):</label>
+                <InputNumber id="urgent" @bind-Value="Todo.Urgent" class="form-control" min="1" max="5" step="1"  />
+                <ValidationMessage For="() => Todo.Urgent" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="regularity" class="form-label">Regularity:</label> 
+                <InputText id="regularity" @bind-Value="Todo.Regularity" class="form-control" /> 
+                <ValidationMessage For="() => Todo.Regularity" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/todos">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Todo Todo { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddTodo()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Todo.Add(Todo);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/todos");
+    }
+}
